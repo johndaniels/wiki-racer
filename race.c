@@ -10,7 +10,6 @@ typedef struct _node_data {
 } node_data_t;
 
 typedef struct _queue_data {
-    uint32_t prev;
     uint32_t current;
 } queue_data_t;
 
@@ -43,6 +42,16 @@ void queue_push(queue_data_t data) {
     queue_back++;
 }
 
+void print_chain(disk_hash_t *hash, uint32_t final) {
+    uint32_t current = final;
+    puts("FOUND\n");
+    while (data[current].prev != (uint32_t)-1) {
+        printf("%s\n", disk_hash_get_string(hash, current));
+        current = data[current].prev;
+    }
+    printf("%s\n", disk_hash_get_string(hash, current));
+}
+
 int main(int argc, char **argv) {
     if (argc < 4) {
         printf("Usage: race datafile.dat start end");
@@ -55,29 +64,30 @@ int main(int argc, char **argv) {
     queue = malloc(MAX_QUEUE_ITEMS * sizeof(queue_data_t));
     for (uint32_t i=0; i<size; i++) {
         data[i].distance = (uint32_t)-1;
+        data[i].prev = (uint32_t)-1;
     }
     queue_front = 0;
     queue_back = 0;
     data[start].distance = 0;
     queue_data_t current;
     current.current = start;
-    current.prev = (uint32_t)-1;
     queue_push(current);
     while (queue_size() != 0) {
         queue_data_t current = queue_pop();
         if (current.current == end) {
-            printf("FOUND!\n");
+            print_chain(hash, current.current);
             break;
-        }
-        if (data[current.current].distance < (uint32_t)-1) {
-            continue;
         }
         size_t links_len;
         uint32_t *links = disk_hash_get_links(hash, current.current, &links_len);
         for (size_t i = 0; i < links_len; i++) {
+            if (data[links[i]].distance != (uint32_t)-1) {
+                continue;
+            }
             queue_data_t next;
             next.current = links[i];
-            next.prev = current.current;
+            data[links[i]].distance = data[current.current].distance + 1;
+            data[links[i]].prev = current.current;
             queue_push(next);
         }
     }
