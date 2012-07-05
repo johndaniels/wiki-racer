@@ -32,8 +32,11 @@ xmlChar* find_title(xmlNodePtr pageNode) {
 xmlChar* find_text(xmlNodePtr pageNode) {
     xmlNodePtr revisionChildPtr = child_element_by_name(pageNode, REVISION);
     xmlNodePtr textChildPtr = child_element_by_name(revisionChildPtr, TEXT);
-    return textChildPtr->children->content;
-}
+    if (textChildPtr->children) {
+        return textChildPtr->children->content;
+    }
+    return BAD_CAST("");
+
 
 bool is_redirect(xmlNodePtr pageNode) {
 	xmlNodePtr redirectChildPtr = child_element_by_name(pageNode, REDIRECT);
